@@ -8,9 +8,11 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: Number(process.env.PORT) || 10000,
+    allowedHosts: ['meenatchi-billing-test-1.onrender.com'],
   },
   preview: {
     host: '0.0.0.0',
     port: Number(process.env.PORT) || 10000,
+    allowedHosts: ['meenatchi-billing-test-1.onrender.com'],
   },
 })
