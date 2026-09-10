@@ -1,0 +1,49 @@
+{
+  "name": "shoe-mart-billing",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Meenatchi Footwear - Text + HID Barcode Billing (Discount before GST)",
+  "author": "Meenatchi Footwear",
+  "main": "main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron:dev": "concurrently \"vite\" \"wait-on tcp:5173 && cross-env ELECTRON_START_URL=http://localhost:5173 electron .\"",
+    "electron:build": "vite build && electron-packager . \"Meenatchi Footwear Billing\" --platform=win32 --arch=x64 --out=dist-electron --overwrite"
+  },
+  "build": {
+    "appId": "com.shoemart.billing",
+    "productName": "Meenatchi Footwear Billing",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "main.cjs"
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "dependencies": {
+    "fuse.js": "^7.1.0",
+    "lucide-react": "^0.344.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^4.2.1",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^41.0.3",
+    "electron-builder": "^26.8.1",
+    "electron-packager": "^17.1.2",
+    "vite": "^5.2.0",
+    "wait-on": "^9.0.4"
+  }
+}
