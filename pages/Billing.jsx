@@ -12,7 +12,7 @@ const SHOP = {
   email: 'meenatchifootwear@gmail.com',
 }
 
-export default function Billing({ invoiceItems, setInvoiceItems }) {
+export default function Billing({ invoiceItems, setInvoiceItems, currentUser }) {
   const [masterProducts, setMasterProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchSuggestions, setSearchSuggestions] = useState([]);
@@ -38,6 +38,7 @@ export default function Billing({ invoiceItems, setInvoiceItems }) {
   const masterProductsRef = useRef([]);
   const [drafts, setDrafts] = useState([]);
   const [showDrafts, setShowDrafts] = useState(false);
+  const isGuest = currentUser?.type === 'guest';
 
   useEffect(() => { loadProducts(); loadDiscounts(); loadDrafts(); }, []);
   // Auto-fill name from phone lookup (Tab-friendly)
@@ -190,9 +191,9 @@ export default function Billing({ invoiceItems, setInvoiceItems }) {
         <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
           <select value={paperSize} onChange={e=>setPaperSize(e.target.value)} className="select" style={{ height: '30px', padding: '4px 8px', fontSize: '11px', width: '110px' }}><option value="small">Small Paper</option><option value="a4">A4 Sheet</option></select>
           <span style={{ fontSize: '11px', color: '#8D6E63', fontWeight: 600 }}>{invoiceItems.length} items • {pointsPreview} pts</span>
-          <button onClick={holdDraft} disabled={invoiceItems.length===0} className="btn-secondary" style={{ padding: '6px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', opacity: invoiceItems.length===0?0.5:1 }}><Save size={12}/> Hold (F5)</button>
+          <button onClick={holdDraft} disabled={invoiceItems.length===0 || isGuest} className="btn-secondary" style={{ padding: '6px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', opacity: (invoiceItems.length===0 || isGuest) ? 0.5 : 1, cursor: isGuest ? 'not-allowed' : 'pointer' }}><Save size={12}/> Hold (F5)</button>
           <button onClick={()=>setShowDrafts(v=>!v)} className="btn-secondary" style={{ padding: '6px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', position: 'relative' }}><FileText size={12}/> Drafts {drafts.length>0 && <span style={{ background:'#B9972E', color:'#fff', borderRadius:'999px', padding:'0 5px', fontSize:'10px', fontWeight:700 }}>{drafts.length}</span>}</button>
-          <button onClick={()=>document.dispatchEvent(new CustomEvent('billing:checkout'))} className="btn-primary" style={{ padding: '8px 14px', fontSize: '12px', fontWeight: 700, background: '#3E2723', border: '1px solid #B9972E' }}>Checkout (F4)</button>
+          <button onClick={()=>document.dispatchEvent(new CustomEvent('billing:checkout'))} disabled={isGuest} className="btn-primary" style={{ padding: '8px 14px', fontSize: '12px', fontWeight: 700, background: '#3E2723', border: '1px solid #B9972E', opacity: isGuest ? 0.5 : 1, cursor: isGuest ? 'not-allowed' : 'pointer' }}>Checkout (F4)</button>
         </div>
       </div>
 
@@ -250,7 +251,7 @@ export default function Billing({ invoiceItems, setInvoiceItems }) {
             </div>
             <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
               <div style={{ flex: '0 0 72px' }}><label style={{ fontSize: '10px', marginBottom: '2px' }}>QTY</label><input className="input" type="number" min="1" value={manualQty} onChange={e=>setManualQty(e.target.value)} style={{ height: '32px', padding: '6px 8px' }} /></div>
-              <button onClick={handleManualAdd} className="btn-primary" style={{ flex: 1, height: '32px', marginTop: '14px', padding: '0', fontSize: '0.82rem', fontWeight: 700, background: '#B9972E', border: 'none' }}>Add</button>
+              <button onClick={handleManualAdd} className="btn-primary" disabled={isGuest} style={{ flex: 1, height: '32px', marginTop: '14px', padding: '0', fontSize: '0.82rem', fontWeight: 700, background: '#B9972E', border: 'none', opacity: isGuest ? 0.5 : 1, cursor: isGuest ? 'not-allowed' : 'pointer' }}>Add</button>
             </div>
           </div>
 
@@ -320,7 +321,7 @@ export default function Billing({ invoiceItems, setInvoiceItems }) {
               <div style={{ textAlign: 'right' }}>
                 <div><b>Customer:</b> {customerName || 'Walk-in'}</div>
                 <div><b>Phone:</b> {customerPhone || '—'} {customerPhone? `• +${pointsPreview} pts`:''}</div>
-                <div><b>Cashier:</b> Admin • {invoiceItems.length} item(s)</div>
+                <div><b>Cashier:</b> {currentUser?.username || 'Admin'} • {invoiceItems.length} item(s)</div>
               </div>
             </div>
 
@@ -358,7 +359,7 @@ export default function Billing({ invoiceItems, setInvoiceItems }) {
                         <td style={{ padding: '6px 4px', textAlign: 'right' }}>₹{after.toFixed(2)}</td>
                         <td style={{ padding: '6px 4px', textAlign: 'right', fontSize: '10px', color: '#8D6E63' }}>{sgstPct>0||cgstPct>0? `${sgstPct}%+${cgstPct}%`:'—'}<br/><span style={{ color: '#3E2723' }}>₹{(sgstAmt+cgstAmt).toFixed(2)}</span></td>
                         <td style={{ padding: '6px 4px', textAlign: 'right', fontWeight: 700, color: '#3E2723' }}>₹{total.toFixed(2)}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center' }}><button onClick={()=>removeItem(item.id)} style={{ border: '1px solid #E9D9B8', background: '#fff', color: '#8D2E00', borderRadius: '6px', width: '24px', height: '24px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={10}/></button></td>
+                        <td style={{ padding: '6px 4px', textAlign: 'center' }}>{isGuest ? '—' : <button onClick={()=>removeItem(item.id)} style={{ border: '1px solid #E9D9B8', background: '#fff', color: '#8D2E00', borderRadius: '6px', width: '24px', height: '24px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={10}/></button>}</td>
                       </tr>
                     )
                   })

@@ -6,6 +6,8 @@ const ACTIVE_DISCOUNT_KEY = 'shoe_mart_active_discount_id';
 const CUSTOMER_STORE_KEY = 'shoe_mart_customers';
 const SEEDED_KEY = 'shoe_mart_seeded_v2';
 const DRAFT_KEY = 'shoe_mart_drafts';
+const USER_STORE_KEY = 'shoe_mart_users';
+const AUTH_SESSION_KEY = 'shoe_mart_auth';
 
 // Migration from old keys if present
 (function migrate() {
@@ -167,6 +169,8 @@ export const db = {
     localStorage.removeItem(ACTIVE_DISCOUNT_KEY);
     localStorage.removeItem(CUSTOMER_STORE_KEY);
     localStorage.removeItem(SEEDED_KEY);
+    localStorage.removeItem(USER_STORE_KEY);
+    localStorage.removeItem(AUTH_SESSION_KEY);
   },
   async seedMock({ products, customers, discounts, invoices }) {
     localStorage.setItem(STORE_KEY, JSON.stringify(products||[]));
@@ -176,5 +180,58 @@ export const db = {
     localStorage.setItem(DISCOUNT_STORE_KEY, JSON.stringify(discounts||[]));
     localStorage.setItem(INVOICE_STORE_KEY, JSON.stringify(invoices||[]));
     localStorage.setItem(SEEDED_KEY, '1');
+  },
+
+  // --- Users / Auth ---
+  async getUsers() {
+    const data = localStorage.getItem(USER_STORE_KEY);
+    return data ? JSON.parse(data) : [];
+  },
+  async seedDefaultUsers() {
+    const users = await this.getUsers();
+    if (users.length === 0) {
+      const defaultUsers = [
+        { id: 'u-admin', username: 'admin', password: 'admin123', type: 'admin', createdAt: new Date().toISOString() },
+        { id: 'u-cashier', username: 'cashier', password: 'cashier123', type: 'cashier', createdAt: new Date().toISOString() },
+        { id: 'u-guest', username: 'guest', password: 'guest123', type: 'guest', createdAt: new Date().toISOString() },
+      ];
+      localStorage.setItem(USER_STORE_KEY, JSON.stringify(defaultUsers));
+    }
+  },
+  async authenticate(username, password) {
+    const users = await this.getUsers();
+    const user = users.find(u => u.username === username && u.password === password);
+    if (user) {
+      const session = { id: user.id, username: user.username, type: user.type, loginTime: new Date().toISOString() };
+      localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+      return session;
+    }
+    return null;
+  },
+  async getCurrentUser() {
+    const data = localStorage.getItem(AUTH_SESSION_KEY);
+    return data ? JSON.parse(data) : null;
+  },
+  async logout() {
+    localStorage.removeItem(AUTH_SESSION_KEY);
+  },
+  async addUser(userData) {
+    const users = await this.getUsers();
+    if (users.find(u => u.username === userData.username)) return null;
+    const newUser = { id: 'u-' + Date.now().toString(), createdAt: new Date().toISOString(), ...userData };
+    users.push(newUser);
+    localStorage.setItem(USER_STORE_KEY, JSON.stringify(users));
+    return newUser;
+  },
+  async updateUser(id, updates) {
+    let users = await this.getUsers();
+    users = users.map(u => u.id === id ? { ...u, ...updates } : u);
+    localStorage.setItem(USER_STORE_KEY, JSON.stringify(users));
+    return users.find(u => u.id === id);
+  },
+  async deleteUser(id) {
+    let users = await this.getUsers();
+    users = users.filter(u => u.id !== id);
+    localStorage.setItem(USER_STORE_KEY, JSON.stringify(users));
   },
 };

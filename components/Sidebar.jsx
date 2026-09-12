@@ -1,20 +1,8 @@
-import { Calculator, PackagePlus, History as HistoryIcon, BarChart3, HelpCircle } from 'lucide-react'
+import { Calculator, PackagePlus, History as HistoryIcon, BarChart3, HelpCircle, Users, LogOut } from 'lucide-react'
 import logo from '../assets/logo.jpeg'
 
-export default function Sidebar({ activePage, setActivePage }) {
-  const navBtn = (isActive) => ({
-    width: '44px',
-    height: '44px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: '12px',
-    border: isActive ? '1px solid #B9972E' : '1px solid transparent',
-    cursor: 'pointer',
-    background: isActive ? '#3E2723' : 'transparent',
-    color: isActive ? '#FFD54F' : '#8D6E63',
-    transition: 'all 0.15s ease',
-  })
+export default function Sidebar({ activePage, setActivePage, currentUser, onLogout, canAccess }) {
+  const role = currentUser?.type || 'guest'
 
   const fullBtn = (isActive) => ({
     display: 'flex',
@@ -33,6 +21,21 @@ export default function Sidebar({ activePage, setActivePage }) {
     transition: 'all 0.15s ease',
   })
 
+  const navItems = [
+    { page: 'billing', icon: <Calculator size={16} />, label: 'Billing' },
+    { page: 'master', icon: <PackagePlus size={16} />, label: 'Master', adminOnly: true },
+    { page: 'history', icon: <HistoryIcon size={16} />, label: 'History' },
+    { page: 'analytics', icon: <BarChart3 size={16} />, label: 'Analytics', noGuest: true },
+    { page: 'users', icon: <Users size={16} />, label: 'Users', adminOnly: true },
+    { page: 'help', icon: <HelpCircle size={16} />, label: 'Help' },
+  ]
+
+  const filteredNav = navItems.filter(item => {
+    if (item.adminOnly && role !== 'admin') return false
+    if (item.noGuest && role === 'guest') return false
+    return true
+  })
+
   return (
     <aside style={{
       width: '190px',
@@ -47,15 +50,30 @@ export default function Sidebar({ activePage, setActivePage }) {
       <img src={logo} alt="Meenatchi" title="Meenatchi Footwear" style={{ width: '100%', height: 'auto', maxHeight: '64px', objectFit: 'contain', borderRadius: '10px', border: '1px solid #D7C0A0', background: '#fff' }} />
       <div style={{ height: '1px', background: '#E9D9B8' }} />
       <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        <button onClick={() => setActivePage('billing')} style={fullBtn(activePage === 'billing')}><Calculator size={16} /> Billing</button>
-        <button onClick={() => setActivePage('master')} style={fullBtn(activePage === 'master')}><PackagePlus size={16} /> Master</button>
-        <button onClick={() => setActivePage('history')} style={fullBtn(activePage === 'history')}><HistoryIcon size={16} /> History</button>
-        <button onClick={() => setActivePage('analytics')} style={fullBtn(activePage === 'analytics')}><BarChart3 size={16} /> Analytics</button>
-        <button onClick={() => setActivePage('help')} style={fullBtn(activePage === 'help')}><HelpCircle size={16} /> Help</button>
+        {filteredNav.map(item => (
+          <button key={item.page} onClick={() => setActivePage(item.page)} style={fullBtn(activePage === item.page)}>
+            {item.icon} {item.label}
+          </button>
+        ))}
       </nav>
-      <div style={{ marginTop: 'auto', padding: '10px', borderRadius: '10px', background: '#FFF3D6', border: '1px solid #E9D9B8', textAlign: 'center' }}>
-        <div style={{ fontSize: '11px', fontWeight: 700, color: '#3E2723' }}>HID Scanner</div>
-        <div style={{ fontSize: '10px', color: '#8D6E63' }}>Ready • Scan barcode</div>
+
+      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ padding: '8px 10px', borderRadius: '10px', background: '#FFF3D6', border: '1px solid #E9D9B8' }}>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: '#3E2723' }}>{currentUser?.username}</div>
+          <div style={{ fontSize: '10px', color: '#8D6E63', textTransform: 'capitalize' }}>{role}</div>
+        </div>
+        <div style={{ padding: '8px 10px', borderRadius: '10px', background: '#FFF3D6', border: '1px solid #E9D9B8', textAlign: 'center' }}>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: '#3E2723' }}>HID Scanner</div>
+          <div style={{ fontSize: '10px', color: '#8D6E63' }}>Ready • Scan barcode</div>
+        </div>
+        <button onClick={onLogout} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+          padding: '8px 10px', borderRadius: '10px', border: '1px solid #E9D9B8',
+          background: '#fff', color: '#8D2E00', fontSize: '11px', fontWeight: 600,
+          cursor: 'pointer', transition: 'all 0.15s ease', width: '100%',
+        }}>
+          <LogOut size={13} /> Sign Out
+        </button>
       </div>
     </aside>
   )
